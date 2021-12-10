@@ -97,6 +97,8 @@ Name | Value |
 --- | --- |
 Speed | 4 |
 Jump Force | 375 |
+Boost Time | 2 |
+Boost Increase | 2 |
 
 ---
 
