@@ -1,21 +1,22 @@
 # Tutorial 1: Movement
 
 ## 1. Create a new scene
-Start by creating a new scene, I have called this scene ScoreManager as that is our component however you can choose any name but it is best to name it something relevant
+Start by creating a new scene, I have called this scene `ScoreManager` as that is our component however you can choose any name but it is best to name it something relevant
 
-Add a square sprite by rightclicking in the hierarchy and going to 2D Object > Sprites > Square and give it the Player tag in the Inspector and rename it to Player in the hierarchy 
-As we will be wanting to move this sprite we need to give it a Rigidbody2D, in the Rigidbody settings we will be turning the Collision Detection from Discrete to Continuous
-We will also assign a Box Collider 2D to the square sprite to help with future scripts
+Add a square sprite by rightclicking in the hierarchy and going to 2D Object > Sprites > Square and give it the `Player` tag in the Inspector and rename it to Player in the hierarchy 
+As we will be wanting to move this sprite we need to give it a `Rigidbody2D`, in the Rigidbody settings we will be turning the Collision Detection from Discrete to Continuous
+We will also assign a `BoxCollider2D` to the square sprite to help with future scripts
 
-Create another squad sprite and call it Ground in the hierarchy, move it underneath the player cube and add a box collider 2d to it so that the player will not fall into the void. I would recommend to scale this sprite on the x axsis so that the player has room to run around
+Create another squad sprite and call it Ground in the hierarchy, move it underneath the player cube and add a `BoxCollider2D` to it so that the player will not fall into the void. I would recommend to scale this sprite on the x axis so that the player has room to run around
 
-Create a circle sprite and make it yellow, give it a rigidbody 2d and a circle collider, make sure Is Trigger is ticked. Create a new tag and call it Coin. Place a couple of these around your level, these will be our coins.
+Create a circle sprite and make it yellow, give it a `RigidBody2D` and a circle collider, make sure Is Trigger is ticked. Create a new tag and call it `Coin`. Place a couple of these around your level, these will be our coins.
 
-Create a Isometric Diamond sprite and give it a box collider 2d, making sure Is Trigger is ticked. Create a new tag and call it Enemey. Place a couple of these on the floor of your level, these will be our spikes. 
+Create a Isometric Diamond sprite and give it a `BoxCollider2D`, making sure Is Trigger is ticked. Create a new tag and call it `Enemey`. Place a couple of these on the floor of your level, these will be our spikes. 
 
 ## 2. Creating the movement script
-With the player square sprite selected go to add component in the inspector and type in movementScript and create a new script and then open it up.
-We will be using both Start and Update voids so do not delete them.
+With the player square sprite selected go to add component in the inspector and type in `movementScript` and create a new script and then open it up.
+>We will be using both Start and Update voids so do not delete them.
+
 To start we will be using serialized fields, this will allow us to edit the speed and jump number inside of the inspector, which will save us a lot of time and allow us to easily tweak the numbers incase the player jumps too high/low or moves too fast/slow.
 I am also adding a speedboost that the player recieves once they pickup a coin, we will control the time they are boosted for and how much their speed is increased. To determine whether the playing is being boosted or not we will make a isBoostActivated bool, being false as default as we will want to enable it later.
 We will also reference the rigidbody component that we added to the sprite here too, I have simply called it rb so that it's quicker to type out, again saving us a lot of time.
@@ -28,7 +29,8 @@ We will also reference the rigidbody component that we added to the sprite here 
 private bool isBoostActivated = false;
 Rigidbody2D rb;
 ```
-We will be using both Start and Update voids so do not delete them.
+>We will be using both Start and Update voids so do not delete them.
+
 Currently the value of rb is not assigned to anything so we must assign it to the rigidbody of our player so that we can actually move with it, by putting it in the start void it will also be assigned when the scene starts.
 
 ```
@@ -122,7 +124,7 @@ First of all we need to have access to our player gameobjects since we are not u
 public GameObject[] Players;
 [SerializeField] public GameObject CurrentPlayer;
 ```
-We will be using both Start and Update voids so do not delete them.
+>We will be using both Start and Update voids so do not delete them.
 
 First of all we create a new void and call it ChangePlayer, this will assign the currentplayer field to the player who is currently active. We will be disabling the players movement by looking at the current player and turning its movement script off.
 
@@ -185,7 +187,8 @@ Now go to your CM vcam 1 and look at the CinemachineVirtualCamera component atta
 
 ## 2. Creating the Camera Switching script
 Click back onto the `Player Controller` game object and create a new script on it, call it cameraSwitch
-We will be using both Start and Update voids so do not delete them.
+>We will be using both Start and Update voids so do not delete them.
+
 Similarly to what we did with the players we will be creating a list to drag our cameras into as well as defining what our current active camera is.
 
 ```
@@ -411,5 +414,4 @@ public void ClearHighScore()
 Save the script and head back to the scene, before we press play we must assign the Game Over Screen to our Game Controller script on the `PlayerController`, simple just drag the pane we made into the value. Now if you press play everything should be working correctly.
 
 While not being a part of the tutorial I would highly recommend to clean up the Hierarchy
-
-For example I have empty gameobjects named for Cameras, Level Assets, Canvas and Coins/Spikes/Players
+For example I have multiple empty gameobjects named which I use to indivudally store Cameras, Level Assets, Canvases and Coins/Spikes/Players. It would also be worth prefabbing the GameOverPanel, Players and PlayerControllerGameObject to easily use in other scenes.
