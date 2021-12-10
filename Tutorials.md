@@ -1,7 +1,7 @@
 # Tutorial 1: Movement
 
 ## 1. Create a new scene
-Start by creating a new scene, you can choose any name but it is best to name it something relevant
+Start by creating a new scene, I have called this scene ScoreManager as that is our component however you can choose any name but it is best to name it something relevant
 
 Add a square sprite by rightclicking in the hierarchy and going to 2D Object > Sprites > Square and give it the Player tag in the Inspector and rename it to Player in the hierarchy 
 As we will be wanting to move this sprite we need to give it a Rigidbody2D, in the Rigidbody settings we will be turning the Collision Detection from Discrete to Continuous
@@ -352,7 +352,64 @@ private void OnTriggerEnter2D(Collider2D other)
 
 # Tutorial 5: Game Controller
 ## 1. Scene Setup
+Right click the Hierarchy and create a UI Panel, I've decided to make the color less transparent than the default values to 241, but it is up to personal preference. On this panel create a TMPRO text place it in the top center and in the text input put GAME OVER. Then on the panel create 2 TMPro Buttons and place them in the center underneath the game over text, rename one of the buttons to ClearHighScoreButton and change its text input to CLEAR HIGHSCORE and similarly rename the other button to PlayAgain and change its text input to PLAY AGAIN
+
+
 
 ## 2. Creating the Game Controller
 
+In order for us to "reset" the level we will just be reloading the scene, because of this we will need to put that we are using Unity's scenemanagement at the top
 
+```
+using UnityEngine.SceneManagement;
+```
+
+In order for the panel to appear we need to have a reference to it so it will appear when we need it, we want it when the player reaches a score below 0 so we will need to find the players score, we will do this by creating a static int
+
+```
+    public GameObject gameOverScreen;
+    public static int playerScore;
+```
+When we start the scene we want to guarantee that it isn't frozen since we will be messing with time, so we will be setting the timescale to 1. We also dont want to see the panel until we say that the game is over so we disable the panel
+```
+private void Awake()
+    {
+        Time.timeScale = 1;
+        gameOverScreen.SetActive(false);
+    }
+```
+As before we can reference our scoremanager in other scripts we will use this to make the player score equal to the current score, and then when the players score is below 0 it will active the panel and freeze time
+
+```
+private void Update()
+    {
+        playerScore = ScoreManager.score;
+        if (ScoreManager.score == -1)
+        {
+            gameOverScreen.SetActive(true);
+            Time.timeScale = 0;
+        }
+    }
+    
+``` 
+To restart our scene we will simply load the currentscene, since we put that we are using unitys scenemanager we can simple just load the scene again, make sure to replace the name in the brackets with the scenes name correctly. If the player is to restart then we will also need to reset the score which we can do with the ResetScore void we made in our `ScoreManager` earlier. Because our panel on awake is disabled we do not need to do anything about it
+```
+public void Restart()
+    {
+        SceneManager.LoadScene("ScoreManager");
+        ScoreManager.instance.ResetScore();
+    }
+```    
+Lastly  we will create a void to clear our highscore, which we will just reference our `ScoreManager` with the same void name
+
+```    
+public void ClearHighScore()
+    {
+        GetComponent<ScoreManager>().ClearHighScore();
+    }
+```
+Save the script and head back to the scene, before we press play we must assign the Game Over Screen to our Game Controller script on the `PlayerController`, simple just drag the pane we made into the value. Now if you press play everything should be working correctly.
+
+While not being a part of the tutorial I would highly recommend to clean up the Hierarchy
+
+For example I have empty gameobjects named for Cameras, Level Assets, Canvas and Coins/Spikes/Players
