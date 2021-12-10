@@ -1,4 +1,5 @@
 # Tutorial 1: Movement
+---
 
 ## 1. Create a new scene
 Start by creating a new scene, you can choose any name but it is best to name it something relevant
@@ -61,7 +62,7 @@ Jump Force: 375
 ```
 
 
-----------------
+---
 
 
 
