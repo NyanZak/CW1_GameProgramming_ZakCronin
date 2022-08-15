@@ -1,268 +1,244 @@
-Door Systems Guide
+Score Manager System Guide
 ==================
-This documentation describes how to use the `Door Systems` component in
-your project.
+This documentation describes how to use the `Score Manager` component in your project.
 
 Behaviours
 ----------
--   \[`DoorTriggerPressurePlate`\]
--   \[`KeyDoor`\]
--   \[`TriggerDoor`\]
--   \[`TriggerDoorKeyboard`\]
--   \[`UI_KeyHolder`\]
+-   \[`CameraSwitch`\]
+-   \[`GameController`\]
+-   \[`movementScript`\]
+-   \[`playerController`\]
 
-DoorTriggerPressurePlate
+CameraSwitch
 ------------------------
-This behaviour allows the user to use pressure plates to open and close
-doors.
+This behaviour allows the user to switch the active camera.
 
 ### Properties
--   `Door` Reference to the door parent object to get the animator
-    component.
--   `timeToStayOpen` this float determines how long the door stays open
-    after the user steps off of the pressure plate.
+-   `cameraList` List of all the cameras in the scene.
+-   `currentCamera` Allows the switching between cameras based on the current active camera.
     
 ### Script    
-We create a reference to the door which has the `Animator` and `DoorAnimation` script attached to it
-This script works by creating a simple timer, once that timer equals 0 then the doors animator which is referenced in the `SerializedField`is accessed in order close the door
+We create a reference to an empty gameobject in the scene that groups all the cameras. When the game starts we make sure that the default camera is the first camera in our gameobject's list.
     
 ```    
-[SerializeField] private DoorAnimated door;
-private float timer;
-private void Update() {
-       if (timer > 0f) {
-           timer -= Time.deltaTime;
-           if (timer <= 0f) {
-              door.CloseDoor();
-           }
-        }
-   }
-  ```  
- There are also two `OnTriggers` setup for if the player decides to step on the pressure plate and either immediately get off or stay on it.
- When the player steps onto the pressure plate then the `Animator` is accessed to open the door, however if the player stays on the pressure plate then the timer is constantly set to 2 so that the door will never close.
-  ```   
-private void OnTriggerStay(Collider collision) {
-float timeToStayOpen = 2f;
-timer = timeToStayOpen;
-}
-private void OnTriggerEnter(Collider collision) {
-door.OpenDoor();
- }
-}
-```  
-
-KeyDoor
--------
-This behaviour allows the user to destroy a door by having the correct
-key equipped and being nearby to the assigned door.
-
-### Properties
--   `Door` Reference to the door parent object to get the animator
-    component.
--   `Key Type` - References the key required in order to open the door.
--   `Open Speed Curve` - Animation for the door opening
--   `Direction` - Determines which direction the door opens.
--   `Open Distance` - Float for how far the door opens.
--   `Open Speed Multiplier` - Float for how fast the door opens.
--   `Door Body` Reference to the door's model to open.
-
-### Script  
-Unlike the pressure plates two objects do not need to access the same door, therefore we can customise the doors animation a lot more to be suitable for multiple game types, this allows us to control the animations direction, speed and distance. 
-
-```
-    [SerializeField] private DoorAnimated door;
-    [SerializeField] private Key.KeyType keyType;
-    public AnimationCurve openSpeedCurve = new AnimationCurve(new Keyframe[] { new Keyframe(0, 1, 0, 0), new Keyframe(0.8f, 1, 0, 0), new Keyframe(1, 0, 0, 0) }); //Contols the open speed at a specific time (ex. the door opens fast at the start then slows down at the end)
-    public enum OpenDirection { x, y, z }
-    public OpenDirection direction = OpenDirection.y;
-    public float openDistance = 3f; //How far should door slide (change direction by entering either a positive or a negative value)
-    public float openSpeedMultiplier = 2.0f; //Increasing this value will make the door open faster
-    public Transform doorBody;
-    bool open = false;
-    Vector3 defaultDoorPosition;
-    Vector3 currentDoorPosition;
-    float openTime = 0;
-```  
-
- In the start function we check that the doors body has been put into its field, while also forcing the collider on the object to be set to true which will be the area the player has to step into with the key
- 
+{
+    public GameObject[] cameraList;
+    private int currentCamera;
     void Start()
     {
-        if (doorBody)
+        currentCamera = 0;
+        for (int i = 0; i < cameraList.Length; i++)
         {
-            defaultDoorPosition = doorBody.localPosition;
         }
-        GetComponent<Collider>().isTrigger = true;
+
+        if (cameraList.Length > 0)
+        {
+            cameraList[0].gameObject.SetActive(true);
+        }
     }
-  
-     
-In the update function we include each of the directions in case the user wants to use a different direction than the one used in the package. When openTime is less than 1 then the door animation will play
-    
+
+We then create a custom input so that the user can customise what button will be used for the switch. When the button is pressed the code checks to see whether it  has reached the end of the list, which when you begin will not have happened so you will switch to the second camera in the gameobject list.
+
  ```  
     void Update()
     {
-        if (!doorBody)
-            return;
-        if (openTime < 1)
+        if (Input.GetButtonDown("Switch"))
         {
-            openTime += Time.deltaTime * openSpeedMultiplier * openSpeedCurve.Evaluate(openTime);
-        }
-        if (direction == OpenDirection.x)
-        {
-            doorBody.localPosition = new Vector3(Mathf.Lerp(currentDoorPosition.x, defaultDoorPosition.x + (open ? openDistance : 0), openTime), doorBody.localPosition.y, doorBody.localPosition.z);
-        }
-        else if (direction == OpenDirection.y)
-        {
-            doorBody.localPosition = new Vector3(doorBody.localPosition.x, Mathf.Lerp(currentDoorPosition.y, defaultDoorPosition.y + (open ? openDistance : 0), openTime), doorBody.localPosition.z);
-        }
-        else if (direction == OpenDirection.z)
-        {
-            doorBody.localPosition = new Vector3(doorBody.localPosition.x, doorBody.localPosition.y, Mathf.Lerp(currentDoorPosition.z, defaultDoorPosition.z + (open ? openDistance : 0), openTime));
-        }
-    }
- ``` 
- 
-We also have a few voids that will reference to the `Key` script. In order to open the door we set the openTime to 0, the user could also just delete the door object instead, if the user choices to keep the animations then the door will also close once the Player exits the trigger that we set as true in the start function.
-
-
-    public Key.KeyType GetKeyType()
-     {
-          return keyType;
-     }
-    public void OpenDoor()
-     {
-        // gameObject.SetActive(false);
-        open = true;
-        currentDoorPosition = doorBody.localPosition;
-        openTime = 0;
-    }
-    private void OnTriggerExit(Collider other)
-    {
-        Invoke("CloseDoor", 2f);  
-    }
-    void CloseDoor()
-    {
-        open = false;
-        currentDoorPosition = doorBody.localPosition;
-        openTime = 0;
-    }
-
-TriggerDoor && TriggerDoorKeyboard
-----------------------------------
-These scripts allow the player to open the door by being nearby // pressing a key on the keyboard.
-
-### Properties
--   `Open Speed Curve` - Animation for the door opening
--   `Direction` - Determines which direction the door opens.
--   `Open Distance` - Float for how far the door opens.
--   `Open Speed Multiplier` - Float for how fast the door opens.
--   `Door Body` Reference to the door's model to open.
-
-### Script 
-We use the same fields, void Start and Update from the `KeyDoor` script. 
-For the TriggerDoorKeyboard script, we use the InputManager to create a new Input which we will use to open the door, the default key for this is `K`, but can be changed.
- 
-For the TriggerDoor script, we do not need to include the  `&& Input.GetAxisRaw("OpenDoor") > 0` however we use OnTriggerEnter instead as we want the door to open when we walk up to it immediately.
-``` 
-    void OnTriggerStay(Collider other)
-    {
-        if (other.gameObject.CompareTag("Player") && Input.GetAxisRaw("OpenDoor") > 0)
-        {
-            open = true;
-            currentDoorPosition = doorBody.localPosition;
-            openTime = 0;
-        }
-    }
-``` 
-
-
-For both of the scripts we include this at the bottom of the script which will close the door once the player leaves the doors trigger area.
-
-``` 
-    void OnTriggerExit(Collider other)
-    {
-        if (other.gameObject.CompareTag("Player"))
-        {
-            open = false;
-            currentDoorPosition = doorBody.localPosition;
-            openTime = 0;
+            currentCamera++;
+            if (currentCamera < cameraList.Length)
+            {
+                cameraList[currentCamera - 1].gameObject.SetActive(false);
+                cameraList[currentCamera].gameObject.SetActive(true);
+            }
+            else
+            {
+                currentCamera = 0;
+                cameraList[currentCamera].gameObject.SetActive(true);
+            }
         }
     }
 }
-``` 
+  ```  
 
-
-UI\_KeyHolder
--------------
-
-This behaviour allows the user to see the keys they currently have in their inventory, once they open a door the key is removed from the UI.
+GameController
+-------
+This behaviour allows the user to manage the games current state.
 
 ### Properties
--   `keyHolder` Reference to the key holder script on the Player.
+-   `gameOverScreen` Reference to our panel.
+-   `playerScoree` - References the players current score.
 
-### Script 
-
-To start off with we are using Unitys Canvas therefore we need a reference to the Unity UI.
-
-```
-using UnityEngine.UI;
-```
-
-We then reference the `KeyHolder` script which is attached to the Player prefab. Then we get the transform of an empty gameobject which is parenting the keyTemplate transform
+### Script  
+We reference the disabled panel so that once we reach the gameoverstate we can simply enable it. To make sure that the game runs properly after the user resets the game we make sure to set the timescale to 1 so that the game is not permanently paused.
 
 ```
-    [SerializeField] private KeyHolder keyHolder;
-    private Transform container;
-    private Transform keyTemplate;
- ``` 
-    
-When we launch the game, we find where those empty gameobjects are in the hierarchy and disable the keytemplate so that no keys will show if we forgot to remove them.
-Once we collect a key the system event will be updated and will then activate our custom void.
+    public GameObject gameOverScreen;
+    public static int playerScore;
 
-```     
     private void Awake()
     {
-        container = transform.Find("Container");
-        keyTemplate = container.Find("KeyTemplate");
-        keyTemplate.gameObject.SetActive(false);
+        Time.timeScale = 1;
+        gameOverScreen.SetActive(false);
     }
+    
+```
+We tie the players score to the scoremanager, therefore we can then tell the game that once the player gets below zero to end the game, which then enables the gameover panel and pauses the game.
+
+From this two functions were made for buttons on the gameoverpanel in order to either restart the scene and the players current score as well as a button to clear the players high score.
+
+```
+    private void Update()
+    {
+        playerScore = ScoreManager.score;
+        if (ScoreManager.score == -1)
+        {
+            gameOverScreen.SetActive(true);
+            Time.timeScale = 0;
+        }
+    }
+
+    public void Restart()
+    {
+        SceneManager.LoadScene("ScoreManager");
+        //gameOverScreen.SetActive(false);
+        ScoreManager.instance.ResetScore();
+    }
+
+    public void ClearHighScore()
+    {
+        GetComponent<ScoreManager>().ClearHighScore();
+    }
+}
+```
+
+Movement Script
+----------------------------------
+These scripts allow the player to be able to move and have its movement effected by outside elements.
+
+### Properties
+-   `speed` - The regular walking speed of the player.
+-   `jumpForce` - How quickly the player can jump.
+-   `boostTime` - How long the player is boosted for.
+-   `boostIncrease` - How much the players speed is increased by.
+
+### Script 
+For our player values we use floats as later we can multiply them in order to create the effect that we want.
+We also start the game with the player not being boosted so that they are not incredibly fast all the time, we also reference the rigidbody that our player is using in order to change its velocity.
+ 
+``` 
+    [SerializeField] private float speed;
+    [SerializeField] private float jumpForce;
+    [SerializeField] private float boostTime;
+    [SerializeField] private float boostIncrease;
+    private bool isBoostActivated = false;
+    Rigidbody2D rb;
+
     void Start()
     {
-        keyHolder.OnKeysChanged += KeyHolder_OnKeysChanged;
+            rb = GetComponent<Rigidbody2D>();
     }
-    void KeyHolder_OnKeysChanged(object sender, System.EventArgs e)
-    {
-        UpdateVisual();
-    }
-``` 
+```
 
-When we come into contact with a key object, we find out what colour/object that key was using the keyholder list and then instantiate a new keytemplate for that key, for this example we change the colour of the key to match the colours in our list.
-    
-``` 
-    void UpdateVisual()
+In order to allow the player to move horizontally we simply reference the raw axis and for the vertical movement we ge tthe current horizontal movement and times it by the speed float that we have setup. This speed is then multiplied if the player happens to be boosted. For the jumping of the player we make sure that the player cannot spam the jump button otherwise it would ruin the game.
+
+```
+    void Update()
     {
-        foreach (Transform child in container) {
-            if (child == keyTemplate) continue;
-            Destroy(child.gameObject);
-        }
-        List<Key.KeyType> keyList = keyHolder.GetKeyList();
-        container.GetComponent<RectTransform>().anchoredPosition = new Vector2(-(keyList.Count - 1) * 80 / 2f, -220);
-        for (int i = 0; i < keyList.Count; i++)
+        float movX = Input.GetAxisRaw("Horizontal");
+        rb.velocity = new Vector2(movX * speed, rb.velocity.y);
+        if (isBoostActivated)
         {
-            Key.KeyType keyType = keyList[i];
-            Transform keyTransform = Instantiate(keyTemplate, container);
-            keyTransform.gameObject.SetActive(true);
-            keyTransform.GetComponent<RectTransform>().anchoredPosition = new Vector2(80 * i, 0);
-            Image keyImage = keyTransform.Find("Image").GetComponent<Image>();
-            switch (keyType)
+            rb.velocity = new Vector2(movX * (speed + boostIncrease), rb.velocity.y);
+        }
+
+        if (Input.GetKeyDown(KeyCode.Space) && Mathf.Approximately(rb.velocity.y,0))
+        {
+            rb.AddForce(transform.up * jumpForce);
+        }
+    }
+```
+
+In order to trigger the boosting of the player we reference trigger areas that we have put onto the coins so that when the player steps into them not only will it add to the score and delete the coin so that the player cannot farm points but that it'll trigger the players boost for the amount that we set it for. Another If statement is also setup so that if the player was to collide with an enemy instead of a coin that it would minus the players score while not deleting the enemy.
+
+```
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.tag == "Coin")
+        {
+            Debug.Log("Trigger");
+            ScoreManager.instance.AddScore();
+            Destroy(other.gameObject);
+            if (!isBoostActivated)
             {
-                default:
-                case Key.KeyType.Red: keyImage.color = Color.red; break;
-                case Key.KeyType.Green: keyImage.color = Color.green; break;
-                case Key.KeyType.Blue: keyImage.color = Color.blue; break;
-                case Key.KeyType.Yellow: keyImage.color = Color.yellow; break;
+                Debug.Log("BOOST");
+                isBoostActivated = true;
+                Invoke("EndBoost", boostTime);
             }
-        } 
-     }
+        }
+
+        if (other.tag == "Enemy")
+        {
+            Debug.Log("Enemy");
+            ScoreManager.instance.MinusScore();
+        }
+    }
+    private void EndBoost()
+    {
+        isBoostActivated = false;
+    }
 }
+```
+
+Player Controller
+-------------
+
+This behaviour allows the user to switch between multiple playable objects.
+
+### Properties
+-   `Players` Reference to the list of objects the player can switch to.
+-   `CurrentPlayer` References the object that the player is currently controlling.
+
+### Script 
+
+First of all we use a list similar to the one used for the cameras, instead using it to group all of the objects/sprites the player can switch between. We set the current player to the beginning of the list which is 0 and we also disable the movementscript for all the objects which will allow us to only be able to move one object at a time.
+```
+   public GameObject[] Players;
+    [SerializeField] public GameObject CurrentPlayer;
+
+    void Start()
+    {
+        for (int i = 1; i < Players.Length; i++)
+        {
+            Players[i].GetComponent<movementScript>().enabled = false;
+        }
+        CurrentPlayer = Players[0];
+    }
+```
+If our custom input is pressed we then search for the other object in the list and set that to the player which ends up as the new currentplayer, enabling its movement script so that we dont just have two sprites that we cannot move while disabling the movement script on the old currentplayer.
+
+```
+    void Update()
+    {
+        if (Input.GetButtonDown("Switch"))
+        {
+            GameObject otherPlayer = null;
+            foreach (GameObject player in Players)
+            {
+                if (player != CurrentPlayer)
+                {
+                    otherPlayer = player;
+                    break;
+                }
+            }
+            ChangePlayer(otherPlayer);
+            CurrentPlayer.GetComponent<movementScript>().enabled = true;
+        }
+    }
+
+        public void ChangePlayer(GameObject player)
+        {
+            CurrentPlayer.GetComponent<movementScript>().enabled = false;
+            CurrentPlayer = player;
+        }
+ }
 ```
