@@ -36,10 +36,10 @@ We create a reference to an empty gameobject in the scene that groups all the ca
             cameraList[0].gameObject.SetActive(true);
         }
     }
-
+```
 We then create a custom input so that the user can customise what button will be used for the switch. When the button is pressed the code checks to see whether it  has reached the end of the list, which when you begin will not have happened so you will switch to the second camera in the gameobject list.
 
- ```  
+```  
     void Update()
     {
         if (Input.GetButtonDown("Switch"))
@@ -58,7 +58,7 @@ We then create a custom input so that the user can customise what button will be
         }
     }
 }
-  ```  
+```  
 
 GameController
 -------
